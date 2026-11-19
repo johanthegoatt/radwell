@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radwell — what size radiator does my room need?</title>
+<meta name="description" content="Work out the heat your room needs in watts and BTU, then the radiator to buy once your boiler or heat pump runs cooler than the test bench. Runs in your browser, nothing uploaded.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#form">Skip to the calculator</a>
+
+<header class="top">
+  <div class="wrap">
+    <h1>Radwell</h1>
+    <p class="lede">Tell it about your room and it works out the heat the room needs, then the radiator you actually have to buy once your heating runs cooler than the box on the radiator assumes.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <form id="form" novalidate>
+    <section class="card">
+      <h2>Your room</h2>
+
+      <div class="row units">
+        <span class="row-label">Measure in</span>
+        <div class="seg" role="radiogroup" aria-label="Units">
+          <label><input type="radio" name="unit" value="m" checked> metres</label>
+          <label><input type="radio" name="unit" value="ft"> feet</label>
+        </div>
+      </div>
+
+      <div class="grid3">
+        <label>Length <span class="u" data-unit>m</span>
+          <input type="number" id="length" inputmode="decimal" min="0" step="0.1" value="5">
+        </label>
+        <label>Width <span class="u" data-unit>m</span>
+          <input type="number" id="width" inputmode="decimal" min="0" step="0.1" value="4">
+        </label>
+        <label>Ceiling height <span class="u" data-unit>m</span>
+          <input type="number" id="height" inputmode="decimal" min="0" step="0.1" value="2.4">
+        </label>
+      </div>
+
+      <div class="grid2">
+        <label>What's the room for?
+          <select id="roomType">
+            <option value="living" selected>Living room / lounge</option>
+            <option value="dining">Dining room</option>
+            <option value="bedroom">Bedroom</option>
+            <option value="kitchen">Kitchen</option>
+            <option value="bathroom">Bathroom</option>
+            <option value="hall">Hall / landing</option>
+            <option value="office">Home office</option>
+          </select>
+        </label>
+        <label>Insulation
+          <select id="insulation">
+            <option value="good">Good — newer or well insulated</option>
+            <option value="average" selected>Average</option>
+            <option value="poor">Poor — older, solid walls, draughty</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid2">
+        <label>Outside walls
+          <select id="externalWalls">
+            <option value="1" selected>1</option>
+            <option value="2">2 (a corner room)</option>
+            <option value="3">3</option>
+            <option value="4">4 (standing alone)</option>
+          </select>
+        </label>
+        <label>Windows
+          <select id="glazing">
+            <option value="double" selected>Double glazed</option>
+            <option value="single">Single glazed</option>
+            <option value="triple">Triple glazed</option>
+          </select>
+        </label>
+      </div>
+
+      <fieldset class="checks">
+        <legend>Anything else true of the room?</legend>
+        <label><input type="checkbox" id="largeWindows"> Large window area</label>
+        <label><input type="checkbox" id="northFacing"> Faces north</label>
+        <label><input type="checkbox" id="frenchDoors"> French / patio doors</label>
+        <label><input type="checkbox" id="unheatedAbove"> Unheated space above (top floor under the roof)</label>
+        <label><input type="checkbox" id="unheatedBelow"> Unheated space below (over a garage)</label>
+      </fieldset>
+    </section>
+
+    <section class="card">
+      <h2>Your heating</h2>
+      <p class="hint">A radiator's BTU number is measured with the water much hotter than your system may run it. Pick how your heating runs so Radwell can size up for the real temperature.</p>
+
+      <div class="row">
+        <span class="row-label">Heating type</span>
+        <div class="seg wrap-seg" role="radiogroup" aria-label="Heating type">
+          <label><input type="radio" name="system" value="hot" checked> Older boiler (hot)</label>
+          <label><input type="radio" name="system" value="condensing"> Modern condensing boiler</label>
+          <label><input type="radio" name="system" value="heatpump"> Heat pump (low temp)</label>
+          <label><input type="radio" name="system" value="custom"> Set my own</label>
+        </div>
+      </div>
+
+      <div class="grid3">
+        <label>Flow <span class="u">°C</span>
+          <input type="number" id="flowTemp" inputmode="decimal" min="0" step="1" value="70">
+        </label>
+        <label>Return <span class="u">°C</span>
+          <input type="number" id="returnTemp" inputmode="decimal" min="0" step="1" value="50">
+        </label>
+        <label>Room <span class="u">°C</span>
+          <input type="number" id="roomTemp" inputmode="decimal" min="0" step="1" value="21">
+        </label>
+      </div>
+    </section>
+  </form>
+
+  <section class="card result" id="result" aria-live="polite">
+    <h2>What you need</h2>
+
+    <div class="headline">
+      <div class="big">
+        <span class="num" id="btuOut">—</span><span class="unit">BTU/hr</span>
+      </div>
+      <div class="sub"><span id="wattOut">—</span> watts of heat for this room</div>
+    </div>
+
+    <div class="buy" id="buyBlock">
+      <h3>The radiator to buy</h3>
+      <p id="buyLine" class="buy-line">Fill in the room and your heating and I'll size it.</p>
+      <div class="buy-figs">
+        <div class="fig"><span class="fig-num" id="ratedBtu">—</span><span class="fig-lab">BTU/hr rated at ΔT 50</span></div>
+        <div class="fig"><span class="fig-num" id="ratedWatt">—</span><span class="fig-lab">watts rated</span></div>
+        <div class="fig"><span class="fig-num" id="multiplier">—</span><span class="fig-lab">bigger than the room's heat</span></div>
+      </div>
+      <p class="dt" id="dtLine"></p>
+    </div>
+
+    <details class="working">
+      <summary>Show the working</summary>
+      <ul id="workList"></ul>
+    </details>
+
+    <p class="guide">A guide to get you to the right size. For an exact figure a heat-loss survey (the method in BS EN 12831) measures each wall and window. Delta-T output follows the EN 442 radiator exponent (n ≈ 1.3).</p>
+  </section>
+</main>
+
+<button type="button" id="rad" class="mascot" aria-label="Rad the radiator — tap for a tip">
+  <svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+    <rect x="12" y="18" width="40" height="30" rx="5" class="rad-body"/>
+    <line x1="20" y1="20" x2="20" y2="46" class="rad-fin"/>
+    <line x1="27" y1="20" x2="27" y2="46" class="rad-fin"/>
+    <line x1="37" y1="20" x2="37" y2="46" class="rad-fin"/>
+    <line x1="44" y1="20" x2="44" y2="46" class="rad-fin"/>
+    <path d="M 22 12 q 3 -4 0 -8" class="rad-wave"/>
+    <path d="M 32 12 q 3 -4 0 -8" class="rad-wave"/>
+    <path d="M 42 12 q 3 -4 0 -8" class="rad-wave"/>
+    <circle cx="26" cy="33" r="2.4" class="rad-eye"/>
+    <circle cx="38" cy="33" r="2.4" class="rad-eye"/>
+    <path id="rad-mouth" d="M 25 40 Q 32 46 39 40" class="rad-mouth"/>
+  </svg>
+</button>
+<div id="rad-bubble" class="mascot-bubble" role="status" aria-live="polite"></div>
+
+<footer class="foot wrap">
+  <p>Runs entirely in your browser. Nothing you type leaves the page. Open source — <a href="https://github.com/johanthegoatt/radwell">code on GitHub</a>.</p>
+</footer>
+
+<script src="src/core.js"></script>
+<script src="src/rad.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
