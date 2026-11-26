@@ -92,8 +92,42 @@
         "% of its rated output at that ΔT.";
     }
 
+    renderHave(f, heat, hasRoom);
+
     if (window.Rad) {
       window.Rad.context({ hasRoom: hasRoom, noWater: noWater, coolSystem: coolSystem, heatPump: heatPump });
+    }
+  }
+
+  // The "already have a radiator" answer: what flow temperature that radiator
+  // needs for this room, or whether it's simply undersized.
+  function renderHave(f, heat, hasRoom) {
+    var block = $("haveBlock");
+    var haveBtu = num("haveBtu");
+    if (!hasRoom || !(haveBtu > 0)) { block.hidden = true; return; }
+    block.hidden = false;
+
+    var split = num("haveSplit");
+    var rf = R.requiredFlow({
+      neededWatts: heat.watts,
+      ratedBtu: haveBtu,
+      roomTemp: f.roomTemp,
+      split: split > 0 ? split : undefined
+    });
+
+    if (rf.cannotMeet) {
+      $("haveLine").textContent = "A " + fmt(rf.ratedWatts) + " W radiator is too small for this room even at the hottest bench temperature (ΔT 50). It can't meet the " +
+        fmt(heat.watts) + " W the room needs at any flow temperature — you'd need a bigger radiator or a second one.";
+    } else if (rf.ok) {
+      $("haveLine").textContent = "To get " + fmt(heat.watts) + " W out of this radiator you'd run the water at about " +
+        rf.flowTemp + "°C flow / " + rf.returnTemp + "°C return (mean " + rf.meanWater + "°C, ΔT " + rf.deltaT +
+        "°C). " + (rf.flowTemp <= 50
+          ? "That's within reach for a heat pump."
+          : rf.flowTemp <= 60
+            ? "A condensing boiler manages that comfortably; a heat pump would have to work harder."
+            : "That's a hot flow — fine for an older boiler, too hot for an efficient heat pump, so a bigger radiator would let it run cooler.");
+    } else {
+      $("haveLine").textContent = "Put in the radiator's rated output to see the flow temperature it needs.";
     }
   }
 

@@ -116,6 +116,19 @@
           <input type="number" id="roomTemp" inputmode="decimal" min="0" step="1" value="21">
         </label>
       </div>
+
+      <div class="row have-rad">
+        <span class="row-label">Already have a radiator?</span>
+        <p class="hint">Put in its box figure (ΔT 50) and Radwell works out the flow temperature your system would need for that radiator to meet this room — the key question when you're moving to a heat pump.</p>
+        <div class="grid3">
+          <label>Rated output <span class="u">BTU/hr</span>
+            <input type="number" id="haveBtu" inputmode="decimal" min="0" step="1" placeholder="optional">
+          </label>
+          <label>Flow−return drop <span class="u">°C</span>
+            <input type="number" id="haveSplit" inputmode="decimal" min="0" step="1" placeholder="5 heat pump / 10 boiler">
+          </label>
+        </div>
+      </div>
     </section>
   </form>
 
@@ -138,6 +151,11 @@
         <div class="fig"><span class="fig-num" id="multiplier">—</span><span class="fig-lab">bigger than the room's heat</span></div>
       </div>
       <p class="dt" id="dtLine"></p>
+    </div>
+
+    <div class="buy have-out" id="haveBlock" hidden>
+      <h3>Your existing radiator</h3>
+      <p id="haveLine" class="buy-line"></p>
     </div>
 
     <details class="working">
