@@ -169,6 +169,69 @@
     };
   }
 
+  // The retrofit question, the other way round. You already have a radiator on
+  // the wall (its box figure is its delta-T-50 rated output) and you want to
+  // know what flow temperature your system has to run at for that radiator to
+  // meet the room. This matters most for a heat pump: a heat pump is cheaper to
+  // run the cooler it flows, so the question is often "will my existing
+  // radiators cope at 45C, or do I have to run hotter (or change them)?".
+  //
+  // The fraction of its rated output the radiator must give is need / rated. If
+  // that is 1 or more, the radiator can't do it even on the test bench, so it's
+  // undersized and no flow temperature will fix it. Otherwise invert the EN 442
+  // curve to get the delta-T, add it to the room temperature for the mean water
+  // temperature, then split that into flow and return around the drop the
+  // system runs (flow minus return).
+  function requiredFlow(opts) {
+    opts = opts || {};
+    var neededW = clampNum(opts.neededWatts);
+    if (!neededW && opts.neededBtu) neededW = btuToW(clampNum(opts.neededBtu));
+    var ratedW = clampNum(opts.ratedWatts);
+    if (!ratedW && opts.ratedBtu) ratedW = btuToW(clampNum(opts.ratedBtu));
+    var room = isFinite(Number(opts.roomTemp)) ? Number(opts.roomTemp) : 20;
+    // The flow-to-return drop. A heat pump usually runs a tight 5C drop, a
+    // boiler a wider one; 10C is a fair default when it isn't given.
+    var split = isFinite(Number(opts.split)) ? Math.abs(Number(opts.split)) : 10;
+
+    if (!(neededW > 0) || !(ratedW > 0)) {
+      return { neededWatts: round(neededW, 0), ratedWatts: round(ratedW, 0), ok: false, cannotMeet: false, meanWater: null, flowTemp: null, returnTemp: null };
+    }
+
+    var fraction = neededW / ratedW;
+    // At or over 1 the radiator is too small even at the rated delta-T 50.
+    if (fraction >= 1) {
+      return {
+        neededWatts: round(neededW, 0),
+        ratedWatts: round(ratedW, 0),
+        roomTemp: room,
+        fraction: round(fraction, 3),
+        cannotMeet: true,
+        ok: false,
+        meanWater: null,
+        flowTemp: null,
+        returnTemp: null
+      };
+    }
+
+    var dt = RATED_DELTA_T * Math.pow(fraction, 1 / RADIATOR_EXPONENT);
+    var meanWater = room + dt;
+    var flow = meanWater + split / 2;
+    var ret = meanWater - split / 2;
+    return {
+      neededWatts: round(neededW, 0),
+      ratedWatts: round(ratedW, 0),
+      roomTemp: room,
+      split: split,
+      fraction: round(fraction, 3),
+      deltaT: round(dt, 1),
+      meanWater: round(meanWater, 1),
+      flowTemp: round(flow, 1),
+      returnTemp: round(ret, 1),
+      cannotMeet: false,
+      ok: true
+    };
+  }
+
   // A full answer: the room's heat plus the rated radiator to buy for it.
   function sizeRadiator(opts) {
     var heat = roomHeat(opts);
@@ -194,6 +257,7 @@
     roomHeat: roomHeat,
     outputFraction: outputFraction,
     ratedSize: ratedSize,
+    requiredFlow: requiredFlow,
     sizeRadiator: sizeRadiator
   };
 });
