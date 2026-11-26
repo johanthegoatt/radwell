@@ -101,6 +101,46 @@ test("sizeRadiator joins the room heat and the rated size", () => {
   assert.ok(out.rated.ratedWatts > out.heat.watts);
 });
 
+test("requiredFlow inverts ratedSize: feed the rated size back and recover the flow", () => {
+  // Size a radiator for a heat pump, then ask what flow temp that exact
+  // radiator needs for the same room. It should hand back the temperatures we
+  // started from.
+  const rated = R.ratedSize({ neededWatts: 2400, flowTemp: 45, returnTemp: 40, roomTemp: 20 });
+  const rf = R.requiredFlow({ neededWatts: 2400, ratedWatts: rated.ratedWatts, roomTemp: 20, split: 5 });
+  assert.ok(rf.ok);
+  assert.ok(Math.abs(rf.flowTemp - 45) < 0.2, "recovers ~45C flow");
+  assert.ok(Math.abs(rf.returnTemp - 40) < 0.2, "recovers ~40C return");
+  assert.ok(Math.abs(rf.meanWater - 42.5) < 0.2);
+});
+
+test("requiredFlow: a bigger radiator can run at a cooler flow temperature", () => {
+  const small = R.requiredFlow({ neededWatts: 1500, ratedWatts: 2000, roomTemp: 20, split: 5 });
+  const big = R.requiredFlow({ neededWatts: 1500, ratedWatts: 3500, roomTemp: 20, split: 5 });
+  assert.ok(small.ok && big.ok);
+  assert.ok(big.flowTemp < small.flowTemp, "the bigger radiator meets the room cooler");
+});
+
+test("requiredFlow flags a radiator too small even at the rated delta-T 50", () => {
+  const rf = R.requiredFlow({ neededWatts: 2500, ratedWatts: 2000, roomTemp: 20 });
+  assert.strictEqual(rf.cannotMeet, true);
+  assert.strictEqual(rf.ok, false);
+  assert.strictEqual(rf.flowTemp, null);
+});
+
+test("requiredFlow takes BTU figures too and defaults the drop to 10C", () => {
+  const rf = R.requiredFlow({ neededBtu: 5000, ratedBtu: 9000, roomTemp: 21 });
+  assert.ok(rf.ok);
+  assert.strictEqual(rf.split, 10);
+  assert.strictEqual(rf.flowTemp, R.round(rf.meanWater + 5, 1));
+});
+
+test("requiredFlow returns a safe empty answer on missing numbers", () => {
+  const rf = R.requiredFlow({});
+  assert.strictEqual(rf.ok, false);
+  assert.strictEqual(rf.flowTemp, null);
+  assert.doesNotThrow(() => R.requiredFlow({ neededWatts: 2000 }));
+});
+
 test("bad or missing numbers clamp instead of throwing", () => {
   const r = R.roomHeat({ length: -5, width: "x", height: 2.4 });
   assert.strictEqual(r.volume, 0);
